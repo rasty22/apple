@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jeans Sewing Shop</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #222;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .product {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .product h3 {
+      margin: 10px 0;
+    }
+
+    button {
+      background: #222;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background: #444;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    input, textarea, select {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .admin-login, .admin-panel {
+      margin-top: 20px;
+    }
+
+    .order-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>👖 Jeans Sewing Shop</h1>
+    <div>
+      <button onclick="showCustomerView()">Customer View</button>
+      <button onclick="showAdminLogin()">Admin Panel</button>
+    </div>
+  </header>
+
+  <div class="container" id="main-container">
+    <!-- Content changes dynamically -->
+  </div>
+
+  <script>
+    const products = [
+      { id: 1, name: "Classic Blue Jeans", price: 45, desc: "Straight fit, mid-rise" },
+      { id: 2, name: "Slim Black Jeans", price: 50, desc: "Slim fit, tapered leg" },
+      { id: 3, name: "Vintage Relaxed Jeans", price: 55, desc: "Relaxed fit, faded wash" },
+    ];
+
+    const adminPassword = "admin123";
+
+    function saveOrder(order) {
+      const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+      orders.unshift(order);
+      localStorage.setItem("orders", JSON.stringify(orders));
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem("orders") || "[]");
+    }
+
+    function showCustomerView() {
+      const container = document.getElementById("main-container");
+      container.innerHTML = `
+        <h2>Available Jeans</h2>
+        <div class="products">
+          ${products.map(
+            (p) => `
+            <div class="product">
+              <h3>${p.name}</h3>
+              <p>${p.desc}</p>
+              <p><strong>$${p.price}</strong></p>
+              <button onclick="orderProduct(${p.id})">Order Now</button>
+            </div>
+          `
+          ).join("")}
+        </div>
+      `;
+    }
+
+    function orderProduct(id) {
+      const product = products.find((p) => p.id === id);
+      const container = document.getElementById("main-container");
+      container.innerHTML = `
+        <h2>Order: ${product.name}</h2>
+        <form id="orderForm">
+          <input type="text" id="name" placeholder="Your Name" required />
+          <input type="text" id="phone" placeholder="Phone Number" required />
+          <input type="text" id="waist" placeholder="Waist (inches)" required />
+          <input type="text" id="length" placeholder="Length (inches)" required />
+          <select id="fit">
+            <option>Regular</option>
+            <option>Slim</option>
+            <option>Relaxed</option>
+          </select>
+          <textarea id="notes" placeholder="Any extra notes?"></textarea>
+          <button type="submit">Place Order</button>
+        </form>
+      `;
+
+      document.getElementById("orderForm").onsubmit = (e) => {
+        e.preventDefault();
+        const order = {
+          id: Date.now(),
+          product: product.name,
+          price: product.price,
+          name: document.getElementById("name").value,
+          phone: document.getElementById("phone").value,
+          waist: document.getElementById("waist").value,
+          length: document.getElementById("length").value,
+          fit: document.getElementById("fit").value,
+          notes: document.getElementById("notes").value,
+          date: new Date().toLocaleString(),
+          status: "Pending"
+        };
+        saveOrder(order);
+        alert("Order placed successfully!");
+        showCustomerView();
+      };
+    }
+
+    function showAdminLogin() {
+      const container = document.getElementById("main-container");
+      container.innerHTML = `
+        <div class="admin-login">
+          <h2>Admin Login</h2>
+          <input type="password" id="adminPass" placeholder="Enter password" />
+          <button onclick="checkAdmin()">Login</button>
+        </div>
+      `;
+    }
+
+    function checkAdmin() {
+      const pass = document.getElementById("adminPass").value;
+      if (pass === adminPassword) {
+        showAdminPanel();
+      } else {
+        alert("Wrong password!");
+      }
+    }
+
+    function showAdminPanel() {
+      const orders = getOrders();
+      const container = document.getElementById("main-container");
+      if (orders.length === 0) {
+        container.innerHTML = "<h2>No orders yet.</h2>";
+        return;
+      }
+
+      container.innerHTML = `
+        <h2>Admin Panel - Orders</h2>
+        ${orders.map(
+          (o) => `
+          <div class="order-card">
+            <h3>${o.product} - $${o.price}</h3>
+            <p><strong>Customer:</strong> ${o.name} (${o.phone})</p>
+            <p><strong>Measurements:</strong> Waist ${o.waist}”, Length ${o.length}”, Fit: ${o.fit}</p>
+            <p><strong>Notes:</strong> ${o.notes || "None"}</p>
+            <p><strong>Date:</strong> ${o.date}</p>
+            <p><strong>Status:</strong> ${o.status}</p>
+          </div>
+        `
+        ).join("")}
+      `;
+    }
+
+    // Show customer view first on load
+    showCustomerView();
+  </script>
+</body>
+</html>
